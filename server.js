@@ -11,10 +11,17 @@ var session = require("express-session");
 // Requiring passport as we've configured it
 var passport = require("./config/passport");
 
+// Compress
+var compression = require('compression')
+
+
 // Sets up the Express App
 // =============================================================
 var app = express();
 var PORT = process.env.PORT || 8090;
+
+// compress all responses
+app.use(compression())
 
 // Requiring our models for syncing
 var db = require("./models");
