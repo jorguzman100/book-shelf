@@ -103,8 +103,23 @@ To install the project follow these steps:
 
    - npm install
 
-3. Run the app with:
-   - node server.js
+3. Create your local environment file:
+
+   - cp .env.example .env
+
+4. Update `.env` with your own local secrets and database credentials.
+
+5. Create the database:
+
+   - mysql -u [your_mysql_user] -p < schema.sql
+
+6. Optional: load the books seed data:
+
+   - mysql -u [your_mysql_user] -p good_reader_db < books.sql
+
+7. Run the app with:
+
+   - npm start
 
 ## Credits, tools and other references
 
