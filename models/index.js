@@ -3,10 +3,38 @@
 const fs = require('fs');
 const path = require('path');
 const Sequelize = require('sequelize');
+require('../config/load-env');
 const basename = path.basename(__filename);
 const env = process.env.NODE_ENV || 'development';
-const config = require(__dirname + '/../config/config.json')[env];
+const config = require(__dirname + '/../config/config')[env];
 const db = {};
+
+function validateConfig(activeConfig, environment) {
+  if (activeConfig.use_env_variable) {
+    if (!process.env[activeConfig.use_env_variable]) {
+      throw new Error(
+        `Missing ${activeConfig.use_env_variable} for NODE_ENV=${environment}.`
+      );
+    }
+
+    return;
+  }
+
+  const requiredKeys = ['database', 'username', 'password'];
+  const missingKeys = requiredKeys.filter(
+    key => activeConfig[key] === undefined || activeConfig[key] === null
+  );
+
+  if (missingKeys.length > 0) {
+    throw new Error(
+      `Missing database config values (${missingKeys.join(
+        ', '
+      )}) for NODE_ENV=${environment}.`
+    );
+  }
+}
+
+validateConfig(config, env);
 
 let sequelize;
 if (config.use_env_variable) {

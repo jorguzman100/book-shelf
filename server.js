@@ -4,6 +4,7 @@
 // ******************************************************************************
 // *** Dependencies
 // =============================================================
+require("./config/load-env");
 var express = require("express");
 var path = require("path")
 
@@ -43,7 +44,11 @@ app.set("view engine", "handlebars");
 app.use(express.static("public"));
 
 // We need to use sessions to keep track of our user's login status
-app.use(session({ secret: "REDACTED", resave: true, saveUninitialized: true }));
+if (!process.env.SESSION_SECRET) {
+  throw new Error("Missing SESSION_SECRET environment variable.");
+}
+
+app.use(session({ secret: process.env.SESSION_SECRET, resave: true, saveUninitialized: true }));
 app.use(passport.initialize());
 app.use(passport.session());
 
