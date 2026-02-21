@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="500" viewBox="0 0 1600 500" role="img" aria-labelledby="title desc">
+  <title id="title">Shopping cart banner</title>
+  <desc id="desc">An illustration of a shopping cart with books.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1f344d"/>
+      <stop offset="100%" stop-color="#132335"/>
+    </linearGradient>
+  </defs>
+  <rect width="1600" height="500" fill="url(#bg)"/>
+  <circle cx="560" cy="370" r="34" fill="#f5f0e4"/>
+  <circle cx="1030" cy="370" r="34" fill="#f5f0e4"/>
+  <circle cx="560" cy="370" r="16" fill="#66788e"/>
+  <circle cx="1030" cy="370" r="16" fill="#66788e"/>
+  <path d="M430 140h700l-86 190H560L510 176H420" fill="none" stroke="#f6c667" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="600" y="150" width="66" height="128" fill="#e67e22"/>
+  <rect x="680" y="130" width="62" height="148" fill="#f1c40f"/>
+  <rect x="756" y="146" width="58" height="132" fill="#2ecc71"/>
+  <rect x="828" y="120" width="72" height="158" fill="#3498db"/>
+  <rect x="916" y="136" width="58" height="142" fill="#9b59b6"/>
+  <text x="800" y="430" text-anchor="middle" font-family="Georgia, serif" font-size="62" fill="#f5f0e4">Your Cart</text>
+</svg>

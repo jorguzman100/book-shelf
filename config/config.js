@@ -9,6 +9,10 @@ function resolvePort(value, defaultPort) {
   return parsedPort;
 }
 
+function resolveLogging() {
+  return /^true$/i.test(process.env.SEQUELIZE_LOGGING || "") ? console.log : false;
+}
+
 module.exports = {
   development: {
     username: process.env.DB_USER,
@@ -16,7 +20,8 @@ module.exports = {
     database: process.env.DB_NAME,
     host: process.env.DB_HOST || "127.0.0.1",
     port: resolvePort(process.env.DB_PORT, 3306),
-    dialect: "mysql"
+    dialect: "mysql",
+    logging: resolveLogging()
   },
   test: {
     username: process.env.TEST_DB_USER || process.env.DB_USER,
@@ -24,10 +29,12 @@ module.exports = {
     database: process.env.TEST_DB_NAME || "database_test",
     host: process.env.TEST_DB_HOST || process.env.DB_HOST || "127.0.0.1",
     port: resolvePort(process.env.TEST_DB_PORT || process.env.DB_PORT, 3306),
-    dialect: "mysql"
+    dialect: "mysql",
+    logging: resolveLogging()
   },
   production: {
     use_env_variable: "JAWSDB_URL",
-    dialect: "mysql"
+    dialect: "mysql",
+    logging: resolveLogging()
   }
 };

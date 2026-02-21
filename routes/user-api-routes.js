@@ -1,188 +1,250 @@
 var db = require("../models");
-
 var passport = require("../config/passport");
+var isAuthenticated = require("../config/middleware/isAuthenticated");
 
+function sanitizeUser(user) {
+  if (!user) {
+    return {};
+  }
 
-module.exports = function (app) {
+  var rawUser = typeof user.get === "function" ? user.get({ plain: true }) : user;
+  return {
+    id: rawUser.id,
+    email: rawUser.email,
+    name: rawUser.name,
+    preferences1: rawUser.preferences1,
+    preferences2: rawUser.preferences2,
+    preferences3: rawUser.preferences3
+  };
+}
 
-    app.post("/api/login", passport.authenticate("local"), function (req, res) {
-        res.json(req.user);
+function isCurrentUser(req, idValue) {
+  var requestedId = parseInt(idValue, 10);
+  return Number.isInteger(requestedId) && req.user && req.user.id === requestedId;
+}
+
+function createRateLimiter(options) {
+  var windowMs = options.windowMs;
+  var max = options.max;
+  var hits = new Map();
+
+  return function(req, res, next) {
+    var now = Date.now();
+    var emailPart =
+      req.body && typeof req.body.email === "string"
+        ? req.body.email.trim().toLowerCase()
+        : "";
+    var key = req.ip + "|" + req.path + "|" + emailPart;
+
+    var recentHits = (hits.get(key) || []).filter(function(timestamp) {
+      return now - timestamp < windowMs;
     });
+    recentHits.push(now);
+    hits.set(key, recentHits);
 
-    app.post("/api/signup", function (req, res) {
-        db.User.create({
-            email: req.body.email,
-            password: req.body.password
-        })
-            .then(function () {
-                res.redirect(307, "/api/login");
-            })
-            .catch(function (err) {
-                res.status(401).json(err);
-            });
-    });
-
-    app.get("/logout", function (req, res) {
-        req.logout();
-        res.redirect("/");
-    });
-
-    app.get("/api/user_data", function (req, res) {
-        if (!req.user) {
-            // The user is not logged in, send back an empty object
-            res.json({});
-        } else {
-            // Otherwise send back the user's email and id
-            // Sending back a password, even a hashed password, isn't a good idea
-            res.json({
-                email: req.user.email,
-                id: req.user.id
-            });
+    if (hits.size > 5000) {
+      hits.forEach(function(value, mapKey) {
+        if (value.length === 0 || now - value[value.length - 1] > windowMs) {
+          hits.delete(mapKey);
         }
-    });
+      });
+    }
 
-    // Get all the users
-    app.get("/api/users", function (req, res) {
-        db.User.findAll({
-            // include: [db.Shoppingcart, db.Purchase]
-            include: [{
-                model: db.Shoppingcart,
-                include: db.Book
-            }, {
-                model: db.Purchase,
-                include: db.Book
-            }]
-        }).then(function (dbUser) {
-            res.json(dbUser);
+    if (recentHits.length > max) {
+      var retryAfterSeconds = Math.max(
+        1,
+        Math.ceil((windowMs - (now - recentHits[0])) / 1000)
+      );
+      res.set("Retry-After", String(retryAfterSeconds));
+      return res.status(429).json({ message: "Too many requests. Please try again later." });
+    }
+
+    return next();
+  };
+}
+
+var loginRateLimiter = createRateLimiter({
+  windowMs: 15 * 60 * 1000,
+  max: 10
+});
+
+var signupRateLimiter = createRateLimiter({
+  windowMs: 60 * 60 * 1000,
+  max: 5
+});
+
+module.exports = function(app) {
+  app.post("/api/login", loginRateLimiter, passport.authenticate("local"), function(req, res) {
+    res.json(sanitizeUser(req.user));
+  });
+
+  app.post("/api/signup", signupRateLimiter, function(req, res) {
+    var email = req.body.email ? req.body.email.trim() : "";
+    var password = req.body.password || "";
+
+    if (!email || !password) {
+      return res.status(400).json({ message: "Email and password are required." });
+    }
+
+    return db.User.create({
+      email: email,
+      password: password
+    })
+      .then(function(dbUser) {
+        return req.login(dbUser, function(err) {
+          if (err) {
+            return res.status(500).json({ message: "Unable to sign in after signup." });
+          }
+
+          return res.json(sanitizeUser(dbUser));
         });
-    });
+      })
+      .catch(function() {
+        res.status(400).json({ message: "Unable to create account." });
+      });
+  });
 
-    /* 
-    [
+  app.post("/logout", function(req, res, next) {
+    req.logout(function(logoutErr) {
+      if (logoutErr) {
+        return next(logoutErr);
+      }
+
+      if (!req.session) {
+        return res.redirect("/");
+      }
+
+      return req.session.destroy(function(sessionErr) {
+        if (sessionErr) {
+          return next(sessionErr);
+        }
+
+        res.clearCookie("good_reader.sid");
+        return res.redirect("/");
+      });
+    });
+  });
+
+  app.get("/api/user_data", function(req, res) {
+    if (!req.user) {
+      return res.json({});
+    }
+
+    return res.json(sanitizeUser(req.user));
+  });
+
+  app.get("/api/csrf-token", function(req, res) {
+    res.json({ csrfToken: res.locals.csrfToken || "" });
+  });
+
+  // Returns only the currently authenticated user to avoid exposing all users.
+  app.get("/api/users", isAuthenticated, function(req, res) {
+    return db.User.findAll({
+      where: {
+        id: req.user.id
+      },
+      attributes: {
+        exclude: ["password"]
+      },
+      include: [
         {
-            "id": 1,
-            "name": "Jorge",
-            "email": "jorge@email.com",
-            "password": "password",
-            "preferences1": "Fiction",
-            "preferences2": "Drama",
-            "preferences3": "Comedy",
-            "ShoppingcartId": null,
-            "PurchaseId": null,
-            "createdAt": "2020-07-19T18:16:22.000Z",
-            "updatedAt": "2020-07-19T18:16:22.000Z",
-            "Shoppingcart": null,
-            "Purchases": []
+          model: db.Shoppingcart,
+          include: [db.Book]
         },
-    ]
-    */
+        {
+          model: db.Purchase,
+          include: [db.Book]
+        }
+      ]
+    })
+      .then(function(dbUsers) {
+        res.json(dbUsers);
+      })
+      .catch(function() {
+        res.status(500).json({ message: "Unable to fetch users." });
+      });
+  });
 
-
-
-    // Get one user by its id
-    app.get("/api/users/:id", function (req, res) { // Missing: user and password validation
-        db.User.findOne({
-            where: {
-                id: req.params.id
-            },
-            include: [{
-                model: db.Shoppingcart,
-                include: [db.Shoppingcart_Book]
-            }, {
-                model: db.Purchase,
-                include: [db.Purchase_Book]
-            }]
-        }).then(function (dbUser) {
-            res.json(dbUser);
-        });
-    });
-
-    /* 
-    {
-        "id": 1,
-        "name": "Jorge",
-        "email": "jorge@email.com",
-        "password": "password",
-        "preferences1": "Fiction",
-        "preferences2": "Drama",
-        "preferences3": "Comedy",
-        "ShoppingcartId": null,
-        "PurchaseId": null,
-        "createdAt": "2020-07-19T18:16:22.000Z",
-        "updatedAt": "2020-07-19T18:16:22.000Z",
-        "Shoppingcart": null,
-        "Purchases": []
+  // Restrict lookups to the user that owns the session.
+  app.get("/api/users/:id", isAuthenticated, function(req, res) {
+    if (!isCurrentUser(req, req.params.id)) {
+      return res.status(403).json({ message: "Forbidden." });
     }
-    */
 
+    return db.User.findOne({
+      where: {
+        id: req.user.id
+      },
+      attributes: {
+        exclude: ["password"]
+      },
+      include: [
+        {
+          model: db.Shoppingcart,
+          include: [db.Shoppingcart_Book]
+        },
+        {
+          model: db.Purchase,
+          include: [db.Purchase_Book]
+        }
+      ]
+    })
+      .then(function(dbUser) {
+        res.json(dbUser);
+      })
+      .catch(function() {
+        res.status(500).json({ message: "Unable to fetch user." });
+      });
+  });
 
+  // Keep account creation through /api/signup only.
+  app.post("/api/users", function(req, res) {
+    res.status(405).json({ message: "Use /api/signup." });
+  });
 
-    // Create a new user - For Sign Up
-    app.post("/api/users", function (req, res) {
-        db.User.create(req.body).then(function (dbUser) {
-            console.log('In .POST /api/users - create()');
-            console.log('req.body: ', req.body);
-            console.log('dbUser: ', dbUser);
-            res.json(dbUser);
-        });
+  // Allow users to update only their own profile fields.
+  app.put("/api/users", isAuthenticated, function(req, res) {
+    var updates = {};
+    var updatableFields = ["name", "preferences1", "preferences2", "preferences3"];
+
+    updatableFields.forEach(function(field) {
+      if (typeof req.body[field] === "string") {
+        updates[field] = req.body[field];
+      }
     });
 
-    /* 
-    {
-        "id": 4,
-        "name": "4",
-        "email": "4@email.com",
-        "password": "4",
-        "preferences1": "Fiction",
-        "preferences2": "Drama",
-        "preferences3": "Comedy",
-        "ShoppingcartId": null,
-        "PurchaseId": null,
-        "updatedAt": "2020-07-19T18:30:00.620Z",
-        "createdAt": "2020-07-19T18:30:00.620Z"
+    if (Object.keys(updates).length === 0) {
+      return res.status(400).json({ message: "No valid fields to update." });
     }
-    */
 
+    return db.User.update(updates, {
+      where: {
+        id: req.user.id
+      }
+    })
+      .then(function(dbUser) {
+        res.json(dbUser);
+      })
+      .catch(function() {
+        res.status(500).json({ message: "Unable to update user." });
+      });
+  });
 
-    // Update an user by its id
-    app.put("/api/users", function (req, res) {
-        db.User.update(
-            req.body,
-            {
-                where: {
-                    id: req.body.id
-                }
-            }).then(function (dbUser) {
-                console.log('In .PUT /api/users - update()');
-                console.log('req.body: ', req.body);
-                console.log('dbUser: ', dbUser);
-                res.json(dbUser);
-            });
-    });
+  app.delete("/api/users/:id", isAuthenticated, function(req, res) {
+    if (!isCurrentUser(req, req.params.id)) {
+      return res.status(403).json({ message: "Forbidden." });
+    }
 
-    /* 
-    [
-        1
-    ]
-    */
-
-
-    // Delete an user by its id
-    app.delete("/api/users/:id", function (req, res) {
-        db.User.destroy({
-            where: {
-                id: req.params.id
-            }
-        }).then(function (dbUser) {
-            console.log('In .DELETE /api/users - destroy()');
-            console.log('req.body: ', req.body);
-            console.log('dbUser: ', dbUser);
-            res.json(dbUser);
-        });
-    });
-
-    /* 
-        1
-    */
-
+    return db.User.destroy({
+      where: {
+        id: req.user.id
+      }
+    })
+      .then(function(dbUser) {
+        res.json(dbUser);
+      })
+      .catch(function() {
+        res.status(500).json({ message: "Unable to delete user." });
+      });
+  });
 };
