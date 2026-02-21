@@ -1,120 +1,103 @@
 // *********************************************************************************
-// Purchase-api-routes.js - this file offers a set of routes for displaying and saving data to the db
+// Purchase-api-routes.js - routes for purchases
 // *********************************************************************************
 
-// Dependencies
-// =============================================================
-
-// Requiring our models
 var db = require("../models");
+var isAuthenticated = require("../config/middleware/isAuthenticated");
 
-// Routes
-// =============================================================
-module.exports = function (app) {
-    console.log('In purchase-api-routes.js');
-    // console.log("db.Purchase: ", db.Purchase);
+function isCurrentUser(req, idValue) {
+  var requestedId = parseInt(idValue, 10);
+  return Number.isInteger(requestedId) && req.user && req.user.id === requestedId;
+}
 
-    // GET route for getting all of the purchases
-    app.get("/api/purchases", function (req, res) {
-        db.Purchase.findAll({
-            include: [db.Book]
-        }).then(function (dbPurchase) {
-            console.log('In .get /api/purchases - findAll()');
-            console.log('req.body: ', req.body);
-            console.log('dbPurchase: ', dbPurchase);
-            res.json(dbPurchase);
-        });
-    });
-
-
-    // Get route for retrieving a single Purchase for a Userid
-    app.get("/api/purchase/:UserId", function (req, res) {
-        db.Purchase.findAll({
-            where: {
-                UserId: req.params.UserId
-            },
-            include: [db.Book]
-        }).then(function (dbPurchase) {
-            console.log('In .get /api/purchase/:UserId - findAll()');
-            console.log('req.params.UserId: ', req.params.UserId);
-            console.log('dbPurchase: ', dbPurchase);
-            res.json(dbPurchase);
-        });
-    });
-
-    /* 
-      // Get route for retrieving a single category
-      app.get("/api/purchases/category/:category", function(req, res) {
-        db.Purchase.findAll({
-          where: {
-            categories: req.params.category
-          },
-          // include: [db.Author]
-        }).then(function (dbPurchase) {
-          console.log('In .get /api/purchases/:category - findAll()');
-          console.log('req.params.category: ', req.params.category);
-          console.log('dbPurchase: ', dbPurchase);
-          res.json(dbPurchase);
-        });
+module.exports = function(app) {
+  app.get("/api/purchases", isAuthenticated, function(req, res) {
+    return db.Purchase.findAll({
+      where: {
+        UserId: req.user.id
+      },
+      include: [db.Book]
+    })
+      .then(function(dbPurchase) {
+        res.json(dbPurchase);
+      })
+      .catch(function() {
+        res.status(500).json({ message: "Unable to fetch purchases." });
       });
-     */
+  });
 
-    // POST route for saving a new Purchase
-    app.post("/api/purchases", function (req, res) {
-        db.Purchase.create({
-            UserId: req.body.UserId,
-            BookId: req.body.BookId,
-            // total: req.body.total,
-            date: new Date()
-        }).then(function (dbPurchase) {
-            console.log('In .POST /api/purchases - create()');
-            console.log('req.body: ', req.body);
-            console.log('dbPurchase: ', dbPurchase);
-            // res.json(dbPurchase);
+  app.get("/api/purchase/:UserId", isAuthenticated, function(req, res) {
+    if (!isCurrentUser(req, req.params.UserId)) {
+      return res.status(403).json({ message: "Forbidden." });
+    }
 
-            // Also insert into the intermediary table
-            db.Purchase_Book.create({
-                PurchaseId: dbPurchase.id,
-                BookId: req.body.BookId
-            }).then(function (dbPurchase_Book) {
-                console.log('In .POST /api/purchase - create() - Purchase_Book');
-                console.log('req.body: ', req.body);
-                console.log('dbPurchase_Book: ', dbPurchase_Book);
-                res.json(dbPurchase_Book);
-            });
+    return db.Purchase.findAll({
+      where: {
+        UserId: req.user.id
+      },
+      include: [db.Book]
+    })
+      .then(function(dbPurchase) {
+        res.json(dbPurchase);
+      })
+      .catch(function() {
+        res.status(500).json({ message: "Unable to fetch purchase history." });
+      });
+  });
+
+  app.post("/api/purchases", isAuthenticated, function(req, res) {
+    var bookId = parseInt(req.body.BookId, 10);
+    if (!Number.isInteger(bookId)) {
+      return res.status(400).json({ message: "A valid BookId is required." });
+    }
+
+    return db.Purchase.create({
+      UserId: req.user.id,
+      date: new Date()
+    })
+      .then(function(dbPurchase) {
+        return db.Purchase_Book.create({
+          PurchaseId: dbPurchase.id,
+          BookId: bookId
         });
-    });
+      })
+      .then(function(dbPurchaseBook) {
+        res.json(dbPurchaseBook);
+      })
+      .catch(function() {
+        res.status(500).json({ message: "Unable to create purchase." });
+      });
+  });
 
+  app.delete("/api/purchases/:UserId", isAuthenticated, function(req, res) {
+    if (!isCurrentUser(req, req.params.UserId)) {
+      return res.status(403).json({ message: "Forbidden." });
+    }
 
-    // DELETE route for deleting a Purchase
-    app.delete("/api/purchases/:UserId", function (req, res) {
-        db.Purchase.destroy({
-            where: {
-                UserId: req.params.UserId
-            }
-        }).then(function (dbPurchase) {
-            console.log('In .DELETE /api/purchases - destroy()');
-            console.log('req.params.UserId: ', req.params.UserId);
-            console.log('dbPurchase: ', dbPurchase);
-            res.json(dbPurchase);
-        });
-    });
+    return db.Purchase.destroy({
+      where: {
+        UserId: req.user.id
+      }
+    })
+      .then(function(dbPurchase) {
+        res.json(dbPurchase);
+      })
+      .catch(function() {
+        res.status(500).json({ message: "Unable to delete purchases." });
+      });
+  });
 
-
-    // PUT route for updating posts
-    app.put("/api/purchases", function (req, res) {
-        db.Purchase.update(
-            req.body,
-            {
-                where: {
-                    UserId: req.body.UserId
-                }
-            }).then(function (dbPurchase) {
-                console.log('In .PUT /api/purchases - update()');
-                console.log('req.body.UserId: ', req.body.UserId);
-                console.log('dbPurchase: ', dbPurchase);
-                res.json(dbPurchase);
-            });
-    });
-
+  app.put("/api/purchases", isAuthenticated, function(req, res) {
+    return db.Purchase.update(req.body, {
+      where: {
+        UserId: req.user.id
+      }
+    })
+      .then(function(dbPurchase) {
+        res.json(dbPurchase);
+      })
+      .catch(function() {
+        res.status(500).json({ message: "Unable to update purchases." });
+      });
+  });
 };

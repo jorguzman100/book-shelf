@@ -14,7 +14,7 @@ module.exports = function (sequelize, DataTypes) {
         Shoppingcart.belongsTo(models.User, {  // foreignKey ??
             allowNull: true
         });
-        Shoppingcart.belongsToMany(models.Book, { through: 'Shoppingcart_Book' }); 
+        Shoppingcart.belongsToMany(models.Book, { through: models.Shoppingcart_Book });
     };
 
     return Shoppingcart;

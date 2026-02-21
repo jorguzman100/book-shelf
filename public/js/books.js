@@ -1,138 +1,204 @@
 $(document).ready(() => {
+  let currentBookId = null;
+  const FALLBACK_BOOK_IMAGE = "/images/book-placeholder.svg";
 
-    // Get logged in user's data
-    let user = $.get("/api/user_data").then(function (data) {
-        console.log('user.email: ', data.email);
-        console.log('user.id: ', data.id);
-        return data;
+  function escapeHtml(value) {
+    return String(value || "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+
+  function safeImageSrc(url) {
+    if (typeof url !== "string") {
+      return FALLBACK_BOOK_IMAGE;
+    }
+
+    var trimmedUrl = url.trim();
+    if (!/^https?:\/\//i.test(trimmedUrl)) {
+      return FALLBACK_BOOK_IMAGE;
+    }
+
+    try {
+      var parsedUrl = new URL(trimmedUrl);
+
+      if (parsedUrl.protocol === "http:") {
+        // Catalog seed data uses http Google Books thumbnails; upgrade to https to satisfy CSP.
+        if (/^books\.google\.com$/i.test(parsedUrl.hostname)) {
+          parsedUrl.protocol = "https:";
+          return parsedUrl.toString();
+        }
+
+        return FALLBACK_BOOK_IMAGE;
+      }
+    } catch (_err) {
+      return FALLBACK_BOOK_IMAGE;
+    }
+
+    return trimmedUrl;
+  }
+
+  function getCurrentUser() {
+    return $.get("/api/user_data").then(function(data) {
+      if (!data || !data.id) {
+        window.location.replace("/login");
+        return null;
+      }
+
+      return data;
     });
+  }
 
-    // ********** Event listeners ***********
-    let currentBookId;
-    $(document).on('click', (event) => {
+  function renderCategoryBooks(books) {
+    $("#booksCards").empty();
 
-        // Click on any category name
-        if ($(event.target).attr('class') === 'categoryLink') {
+    books.forEach((book) => {
+      var safeTitle = escapeHtml(book.title);
+      var safeAuthors = escapeHtml(book.authors);
+      var safeThumbnail = safeImageSrc(book.thumbnail);
 
-            // Get the books within the category
-            $.ajax({
-                method: "GET",
-                url: `/api/books/category/${event.target.text}`
-            }).then((books) => {
-                console.log(`Books within ${event.target.text}: `, books);
+      let card = `
+        <div class="card" style="width: 12rem;">
+          <img src="${safeThumbnail}" class="card-img-top book-cover" alt="${safeTitle} book image" />
+          <div class="card-body">
+            <h5 class="card-title"><a href="#" class="modalTrigger" bookId="${book.id}">${safeTitle}</a></h5>
+            <p class="card-text">By ${safeAuthors}</p>
+          </div>
+        </div>
+      `;
 
-                // Empty the booksCards area
-                $('#booksCards').empty();
-
-                // Create the book cards
-                books.forEach((book) => {
-                    // data-toggle="modal" data-target="#bookModal"
-                    let card = `
-                <div class="card" style="width: 12rem;">
-                    <img src="${book.thumbnail}" class="card-img-top" alt="${book.title} book image" />
-                    <div class="card-body">
-                        <h5 class="card-title"><a href="#" class="modalTrigger" bookId="${book.id}">${book.title}</a></h5>
-                        <p class="card-text">
-                            By ${book.authors}
-                        </p>
-                    </div>
-                </div>
-                `;
-                    $('#booksCards').append(card);
-                });
-            });
-        }
-
-        // Click on the modal
-        else if ($(event.target).attr('class') == 'modalTrigger') {
-
-            // Get book details by its id
-            $.ajax({
-                method: "GET",
-                url: `/api/books/${$(event.target).attr('bookId')}`
-            }).then((book) => {
-                console.log('Modal book: ', book);
-
-                // Empty the modal area
-                $('.modal-body').empty();
-
-                // Create the modal book card
-                let modalBookCard = `
-                <div class="card">
-                    <img src="${book.thumbnail}" class="card-img-top" alt="${book.thumbnail}" />
-                    <div class="card-body">
-                        <h5 class="card-title"><a href="#" class="modalTrigger" bookId="${book.id}">${book.title}</a></h5>
-                        <p class="card-text"> <strong> Subtitle </strong> ${book.subtitle}</p>
-                        <p class="card-text"> <strong> By </strong> ${book.authors}</p>
-                        <p class="card-text"> <strong> Categories </strong> ${book.categories}</p>
-                        <p class="card-text"> <strong> Published year </strong> ${book.published_year}</p>
-                        <p class="card-text"> <strong> Average rating </strong> ${book.average_rating}</p>
-                        <p class="card-text"> <strong> Ratings count </strong> ${book.ratings_count}</p>
-                        <p class="card-text"> <strong> Description </strong> ${book.description}<p>
-                        <p class="card-text"> <strong> Price </strong> ${book.price}</p>
-                    </div>
-                </div>
-                `;
-                $('.modal-body').append(modalBookCard);
-
-                // Display the modal
-                $('#bookModal').modal();
-
-                currentBookId = book.id;
-            });
-        }
-
-        // Click on add to the cart
-        else if ($(event.target).attr('id') == 'addToCart') {
-            console.log('Add to cart button clicked');
-            console.log('currentBookId: ', currentBookId);
-
-            $.get("/api/user_data").then(function (data) {
-                console.log('user.email: ', data.email);
-                console.log('user.id: ', data.id);
-
-                // Add the book to the cart
-                $.post("/api/shoppingcarts", {
-                    UserId: data.id,
-                    BookId: currentBookId
-                }, (cart_answer) => {
-                    console.log('cart_answer: ', cart_answer);
-                    window.location.href = "/cart";
-                });
-            });
-
-
-        }
+      var $card = $(card);
+      $card.find("img.book-cover").on("error", function() {
+        this.src = FALLBACK_BOOK_IMAGE;
+      });
+      $("#booksCards").append($card);
     });
+  }
 
+  function renderBookModal(book) {
+    var safeThumbnail = safeImageSrc(book.thumbnail);
+    var safeTitle = escapeHtml(book.title);
+    var safeSubtitle = escapeHtml(book.subtitle);
+    var safeAuthors = escapeHtml(book.authors);
+    var safeCategories = escapeHtml(book.categories);
+    var safePublishedYear = escapeHtml(book.published_year);
+    var safeAverageRating = escapeHtml(book.average_rating);
+    var safeRatingsCount = escapeHtml(book.ratings_count);
+    var safeDescription = escapeHtml(book.description);
+    var safePrice = escapeHtml(book.price);
 
+    $(".modal-body").empty();
 
+    let modalBookCard = `
+      <div class="card">
+        <img src="${safeThumbnail}" class="card-img-top book-cover" alt="${safeTitle}" />
+        <div class="card-body">
+          <h5 class="card-title"><a href="#" class="modalTrigger" bookId="${book.id}">${safeTitle}</a></h5>
+          <p class="card-text"><strong>Subtitle</strong> ${safeSubtitle}</p>
+          <p class="card-text"><strong>By</strong> ${safeAuthors}</p>
+          <p class="card-text"><strong>Categories</strong> ${safeCategories}</p>
+          <p class="card-text"><strong>Published year</strong> ${safePublishedYear}</p>
+          <p class="card-text"><strong>Average rating</strong> ${safeAverageRating}</p>
+          <p class="card-text"><strong>Ratings count</strong> ${safeRatingsCount}</p>
+          <p class="card-text"><strong>Description</strong> ${safeDescription}</p>
+          <p class="card-text"><strong>Price</strong> ${safePrice}</p>
+        </div>
+      </div>
+    `;
 
-    // Load the books
-    $.ajax({
+    var $modalBookCard = $(modalBookCard);
+    $modalBookCard.find("img.book-cover").on("error", function() {
+      this.src = FALLBACK_BOOK_IMAGE;
+    });
+    $(".modal-body").append($modalBookCard);
+  }
+
+  $(document).on("click", (event) => {
+    if ($(event.target).hasClass("categoryLink")) {
+      event.preventDefault();
+
+      $.ajax({
         method: "GET",
-        url: "/api/books/"
-    }).then((books) => {
-        // console.log('Books: ', books);
+        url: `/api/books/category/${encodeURIComponent($(event.target).text().trim())}`
+      }).then((books) => {
+        renderCategoryBooks(books);
+      });
 
-        // Create the list of categories
-        let categories = books.map((book) => {
-            return book.categories;
-        });
-        // console.log('Categories: ', categories);
+      return;
+    }
 
-        let uniqueCategories = Array.from(new Set(categories));
+    if ($(event.target).hasClass("modalTrigger")) {
+      event.preventDefault();
 
-        // console.log('uniqueCategories: ', uniqueCategories);
+      $.ajax({
+        method: "GET",
+        url: `/api/books/${$(event.target).attr("bookId")}`
+      }).then((book) => {
+        renderBookModal(book);
+        $("#bookModal").modal();
+        currentBookId = book.id;
+      });
 
-        uniqueCategories.forEach((category) => {
-            let li = $('<li>');
-            let a = $('<a>');
-            a.attr('href', `#`);
-            a.attr('class', 'categoryLink');
-            a.text(category);
-            li.append(a);
-            $('#categories').append(li);
-        });
+      return;
+    }
+
+    if ($(event.target).attr("id") === "addToCart") {
+      event.preventDefault();
+      if (!currentBookId) {
+        return;
+      }
+
+      getCurrentUser().then((data) => {
+        if (!data) {
+          return;
+        }
+
+        $.post(
+          "/api/shoppingcarts",
+          {
+            UserId: data.id,
+            BookId: currentBookId
+          },
+          () => {
+            window.location.href = "/cart";
+          }
+        );
+      });
+    }
+  });
+
+  $.ajax({
+    method: "GET",
+    url: "/api/books/"
+  }).then((books) => {
+    if (!Array.isArray(books) || books.length === 0) {
+      $("#categories").append("<li>No books are available yet.</li>");
+      $("#booksCards").html(
+        '<p class="text-muted">No books found in the catalog. Seed data is required.</p>'
+      );
+      return;
+    }
+
+    let categories = books
+      .map((book) => (typeof book.categories === "string" ? book.categories.trim() : ""))
+      .filter((category) => category.length > 0);
+    let uniqueCategories = Array.from(new Set(categories));
+
+    if (uniqueCategories.length === 0) {
+      $("#categories").append("<li>No categories available.</li>");
+      return;
+    }
+
+    uniqueCategories.forEach((category) => {
+      let li = $("<li>");
+      let a = $("<a>");
+      a.attr("href", "#");
+      a.attr("class", "categoryLink");
+      a.text(category);
+      li.append(a);
+      $("#categories").append(li);
     });
+  });
 });

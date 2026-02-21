@@ -1,7 +1,4 @@
 $(document).ready(function () {
-  $('ul').hide();
-  
-
   // Getting references to our form and input
   var signUpForm = $("form.signup");
   var emailInput = $("input#email-input");
@@ -39,7 +36,11 @@ $(document).ready(function () {
   }
 
   function handleLoginErr(err) {
-    $("#alert .msg").text(err.responseJSON);
+    var errorMessage =
+      err && err.responseJSON && err.responseJSON.message
+        ? err.responseJSON.message
+        : "Unable to sign up.";
+    $("#alert .msg").text(errorMessage);
     $("#alert").fadeIn(500);
   }
 });

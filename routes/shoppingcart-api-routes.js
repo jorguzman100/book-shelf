@@ -1,117 +1,101 @@
 // *********************************************************************************
-// shoppingcart-api-routes.js - this file offers a set of routes for displaying and saving data to the db
+// shoppingcart-api-routes.js - routes for shopping cart operations
 // *********************************************************************************
 
-// Dependencies
-// =============================================================
-
-// Requiring our models
 var db = require("../models");
+var isAuthenticated = require("../config/middleware/isAuthenticated");
 
-// Routes
-// =============================================================
-module.exports = function (app) {
+function isCurrentUser(req, idValue) {
+  var requestedId = parseInt(idValue, 10);
+  return Number.isInteger(requestedId) && req.user && req.user.id === requestedId;
+}
 
-  // GET route for getting all of the shoppingcarts
-  app.get("/api/shoppingcarts", function (req, res) {
-    db.Shoppingcart.findAll({
-      include: [db.Book]
-    }).then(function (dbShoppingcart) {
-      console.log('In .get /api/shoppingcarts - findAll()');
-      console.log('req.body: ', req.body);
-      console.log('dbShoppingcart: ', dbShoppingcart);
-      res.json(dbShoppingcart);
-    });
-  });
-
-
-  // Get route for retrieving a single shoppingcart for a Userid
-  app.get("/api/shoppingcart/:UserId", function (req, res) {
-    db.Shoppingcart.findOne({
+module.exports = function(app) {
+  app.get("/api/shoppingcarts", isAuthenticated, function(req, res) {
+    return db.Shoppingcart.findAll({
       where: {
-        UserId: req.params.UserId
+        UserId: req.user.id
       },
-      // include: [db.Author]
-    }).then(function (dbShoppingcart) {
-      console.log('In .get /api/shoppingcarts - findOne()');
-      console.log('req.params.UserId: ', req.params.UserId);
-      console.log('dbShoppingcart: ', dbShoppingcart);
-      res.json(dbShoppingcart);
-    });
-  });
-
-  /* 
-    // Get route for retrieving a single category
-    app.get("/api/shoppingcarts/category/:category", function(req, res) {
-      db.Shoppingcart.findAll({
-        where: {
-          categories: req.params.category
-        },
-        // include: [db.Author]
-      }).then(function (dbShoppingcart) {
-        console.log('In .get /api/shoppingcarts/:category - findAll()');
-        console.log('req.params.category: ', req.params.category);
-        console.log('dbShoppingcart: ', dbShoppingcart);
+      include: [db.Book]
+    })
+      .then(function(dbShoppingcart) {
         res.json(dbShoppingcart);
+      })
+      .catch(function() {
+        res.status(500).json({ message: "Unable to fetch shopping carts." });
       });
-    });
-   */
-
-  // POST route for saving a new shoppingcart
-  app.post("/api/shoppingcarts", function (req, res) {
-    db.Shoppingcart.create({
-      UserId: req.body.UserId,
-      BookId: req.body.BookId
-    }).then(function (dbShoppingcart) {
-      console.log('In .POST /api/shoppingcarts - create()');
-      console.log('req.body: ', req.body);
-      console.log('dbShoppingcart: ', dbShoppingcart);
-      console.log('dbShoppingcart.id: ', dbShoppingcart.id);
-      // res.json(dbShoppingcart);
-
-      // Also insert into the intermediary table
-      db.Shoppingcart_Book.create({
-        ShoppingcartId: dbShoppingcart.id,
-        BookId: req.body.BookId
-      }).then(function (dbShoppingcart_Book) {
-        console.log('In .POST /api/shoppingcarts - create() - Shoppingcart_Book');
-        console.log('req.body: ', req.body);
-        console.log('dbShoppingcart_Book: ', dbShoppingcart_Book);
-        res.json(dbShoppingcart_Book);
-      });
-    });
   });
 
+  app.get("/api/shoppingcart/:UserId", isAuthenticated, function(req, res) {
+    if (!isCurrentUser(req, req.params.UserId)) {
+      return res.status(403).json({ message: "Forbidden." });
+    }
 
-  // DELETE route for deleting a shoppingcart
-  app.delete("/api/shoppingcarts/:UserId", function (req, res) {
-    db.Shoppingcart.destroy({
+    return db.Shoppingcart.findOne({
       where: {
-        UserId: req.params.UserId
+        UserId: req.user.id
       }
-    }).then(function (dbShoppingcart) {
-      console.log('In .DELETE /api/shoppingcarts - destroy()');
-      console.log('req.params.UserId: ', req.params.UserId);
-      console.log('dbShoppingcart: ', dbShoppingcart);
-      res.json(dbShoppingcart);
-    });
-  });
-
-
-  // PUT route for updating posts
-  app.put("/api/shoppingcarts", function (req, res) {
-    db.Shoppingcart.update(
-      req.body,
-      {
-        where: {
-          UserId: req.body.UserId
-        }
-      }).then(function (dbShoppingcart) {
-        console.log('In .PUT /api/shoppingcarts - update()');
-        console.log('req.body.UserId: ', req.body.UserId);
-        console.log('dbShoppingcart: ', dbShoppingcart);
+    })
+      .then(function(dbShoppingcart) {
         res.json(dbShoppingcart);
+      })
+      .catch(function() {
+        res.status(500).json({ message: "Unable to fetch shopping cart." });
       });
   });
 
+  app.post("/api/shoppingcarts", isAuthenticated, function(req, res) {
+    var bookId = parseInt(req.body.BookId, 10);
+    if (!Number.isInteger(bookId)) {
+      return res.status(400).json({ message: "A valid BookId is required." });
+    }
+
+    return db.Shoppingcart.create({
+      UserId: req.user.id
+    })
+      .then(function(dbShoppingcart) {
+        return db.Shoppingcart_Book.create({
+          ShoppingcartId: dbShoppingcart.id,
+          BookId: bookId
+        });
+      })
+      .then(function(dbShoppingcartBook) {
+        res.json(dbShoppingcartBook);
+      })
+      .catch(function() {
+        res.status(500).json({ message: "Unable to add book to shopping cart." });
+      });
+  });
+
+  app.delete("/api/shoppingcarts/:UserId", isAuthenticated, function(req, res) {
+    if (!isCurrentUser(req, req.params.UserId)) {
+      return res.status(403).json({ message: "Forbidden." });
+    }
+
+    return db.Shoppingcart.destroy({
+      where: {
+        UserId: req.user.id
+      }
+    })
+      .then(function(dbShoppingcart) {
+        res.json(dbShoppingcart);
+      })
+      .catch(function() {
+        res.status(500).json({ message: "Unable to delete shopping cart." });
+      });
+  });
+
+  app.put("/api/shoppingcarts", isAuthenticated, function(req, res) {
+    return db.Shoppingcart.update(req.body, {
+      where: {
+        UserId: req.user.id
+      }
+    })
+      .then(function(dbShoppingcart) {
+        res.json(dbShoppingcart);
+      })
+      .catch(function() {
+        res.status(500).json({ message: "Unable to update shopping cart." });
+      });
+  });
 };
