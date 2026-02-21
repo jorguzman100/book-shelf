@@ -18,7 +18,7 @@ module.exports = function (sequelize, DataTypes) {
                 allowNull: false
             }
         });
-        Purchase.belongsToMany(models.Book, { through: 'Purchase_Book' });
+        Purchase.belongsToMany(models.Book, { through: models.Purchase_Book });
     };
 
     return Purchase;

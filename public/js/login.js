@@ -1,6 +1,4 @@
 $(document).ready(function () {
-  $('ul').hide();
-
   // Getting references to our form and inputs
   var loginForm = $("form.login");
   var emailInput = $("input#email-input");
@@ -14,7 +12,6 @@ $(document).ready(function () {
   }); */
 
   loginForm.on("submit", function (event) {
-    console.log('in click');
     event.preventDefault();
     var userData = {
       email: emailInput.val().trim(),
@@ -39,10 +36,10 @@ $(document).ready(function () {
     })
       .then(function() {
         window.location.replace("/home");
-        // If there's an error, log the error
       })
       .catch(function(err) {
-        console.log(err);
+        $("#alert .msg").text("Invalid email or password.");
+        $("#alert").fadeIn(300);
       });
   }
 });

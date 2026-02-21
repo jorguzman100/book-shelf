@@ -7,6 +7,8 @@
       name="viewport"
       content="width=device-width, initial-scale=1, shrink-to-fit=no"
     />
+    <meta name="csrf-token" content="{{csrfToken}}" />
+    <meta name="color-scheme" content="light dark" />
 
     <!-- Bootstrap CSS -->
     <link
@@ -15,20 +17,37 @@
       integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk"
       crossorigin="anonymous"
     />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bungee&family=Space+Grotesk:wght@400;500;700&family=Syne:wght@600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/css/style.css" />
+    <link rel="icon" type="image/svg+xml" href="/images/favicon-memphis.svg" />
 
-    <title>Goog Reader</title>
+    <title>Memphis Shelf</title>
   </head>
 
-  <body>
-    {{!-- Container --}}
-    
-      {{!-- Navbar --}}
-      <nav class="navbar navbar-expand-lg navbar-dark bg-dark p-4">
-        <a class="navbar-brand" href="/">
-        <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn%3AANd9GcRWHup_FEu7FRywJkWvn05whvsjQi17r8HmUA&usqp=CAU" style="width: 150px;" height="150px" class="img-fluid"></a>
+  <body class="app-shell">
+    <header class="site-header">
+      <nav class="navbar navbar-expand-lg memphis-navbar">
+        <a
+          class="navbar-brand brand-block"
+          href="{{#if currentUser}}/home{{else}}/{{/if}}"
+          aria-label="Memphis Shelf home"
+        >
+          <img
+            src="/images/logo-memphis.svg"
+            width="92"
+            height="92"
+            class="brand-logo"
+            alt="Memphis Shelf logo"
+          />
+          <span class="brand-name">Memphis Shelf</span>
         </a>
         <button
-          class="navbar-toggler"
+          class="navbar-toggler memphis-toggler"
           type="button"
           data-toggle="collapse"
           data-target="#navbarNav"
@@ -39,34 +58,53 @@
           <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse navigator" id="navbarNav">
-          <ul class="navbar-nav">
+          <ul class="navbar-nav ml-auto nav-links">
             <li class="nav-item">
-              <a class="nav-link" href="/"
-                >Home <span class="sr-only">(current)</span></a
-              >
+              <a class="nav-link memphis-nav-link" href="{{#if currentUser}}/home{{else}}/{{/if}}">
+                Home
+              </a>
             </li>
-            <li class="nav-item">
-              <a class="nav-link" href="/browse">Browse</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="/cart">Cart</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="/logout">Log out</a>
+            {{#if currentUser}}
+              <li class="nav-item">
+                <a class="nav-link memphis-nav-link" href="/browse">Browse</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link memphis-nav-link" href="/cart">Cart</a>
+              </li>
+              <li class="nav-item">
+                <form method="POST" action="/logout" class="m-0">
+                  <input type="hidden" name="_csrf" value="{{csrfToken}}" />
+                  <button type="submit" class="nav-link btn btn-link memphis-nav-link p-0">
+                    Log out
+                  </button>
+                </form>
+              </li>
+            {{else}}
+              <li class="nav-item">
+                <a class="nav-link memphis-nav-link" href="/login">Log in</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link memphis-nav-link" href="/">Sign up</a>
+              </li>
+            {{/if}}
+            <li class="nav-item theme-toggle-item">
+              <button id="themeToggle" type="button" class="theme-toggle" aria-label="Toggle color theme">
+                <span class="theme-icon" aria-hidden="true">☼</span>
+                <span class="theme-label">Light Mode</span>
+              </button>
             </li>
           </ul>
         </div>
-      </nav>  {{!-- /Navbar --}}
-      <div class="container">
+      </nav>
+    </header>
 
+    <main class="container app-main">
       {{{ body }}}
+    </main>
 
-
-    </div>  {{!-- /Container --}}
-
-    <br>
-    <footer class="footer bg-dark text-light p-4" style="text-align: center; justify-content: center;">
-      THE GOOD READER 2020 @ ALL RIGHTS RESERVED
+    <footer class="site-footer">
+      <p>MEMPHIS SHELF</p>
+      <p>Read loud. Read bold.</p>
     </footer>
 
     <!-- jQuery -->
@@ -90,6 +128,8 @@
     <script src="https://momentjs.com/downloads/moment-with-locales.js"></script>
 
     <!-- Main JS -->
+    <script src="/js/csrf.js"></script>
+    <script src="/js/theme.js"></script>
     {{!-- <script src="../js/home.js"></script> --}}
     {{#each js}}
     {{!-- {{this}} --}}

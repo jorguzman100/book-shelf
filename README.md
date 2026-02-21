@@ -93,33 +93,45 @@ The project was uploaded to [GitHub](https://github.com/) at the following repos
 You can access the deployed application with the Heroku link:
 [https://safe-basin-04900.herokuapp.com/](https://safe-basin-04900.herokuapp.com/)
 
-To install the project follow these steps:
+Quick local setup (easiest path):
 
-1. Clone the application from GitHub with:
+1. Install dependencies:
 
-   - git clone [clone link from GitHub]
+   - `npm install`
 
-2. From the root folder, install the dependencies with:
+2. Create your local env file from the safe template:
 
-   - npm install
+   - `cp .env.example .env`
 
-3. Create your local environment file:
+3. Edit `.env` and set your own values (`SESSION_SECRET`, `DB_PASSWORD`, admin MySQL credentials, etc.).
+   `DB_AUTH_PLUGIN` is optional. If unsure, leave it as `mysql_native_password`.
+   `DB_RESET_ON_START=true` means each `npm start`/`npm run dev` resets DB/user from scratch.
+   `JAWSDB_URL` is for production only; for local use you can leave the template value unchanged.
 
-   - cp .env.example .env
+4. Start the app:
 
-4. Update `.env` with your own local secrets and database credentials.
+   - `npm start`
 
-5. Create the database:
+   This now runs MySQL connectivity check (`SELECT VERSION()`) and DB bootstrap automatically (`npm run db:setup`) before launching the server.
+   For full reset mode (`DB_RESET_ON_START=true`), valid admin credentials in `.env` are required (`MYSQL_ADMIN_*` or `MYSQL_ROOT_*`).
 
-   - mysql -u [your_mysql_user] -p < schema.sql
+5. For development with auto-reload:
 
-6. Optional: load the books seed data:
+   - `npm run dev`
 
-   - mysql -u [your_mysql_user] -p good_reader_db < books.sql
+6. Optional: load seed books:
 
-7. Run the app with:
+   - `mysql -u bookshelf_app -p good_reader_db < books.sql`
 
-   - npm start
+7. Open:
+
+   - `http://localhost:8090`
+
+Pre-push safety checks:
+
+- Confirm `.env` is not tracked: `git ls-files .env` (must print nothing).
+- Confirm no secrets are staged: `git diff --cached`.
+- If any secret was ever committed, rotate it before pushing.
 
 ## Credits, tools and other references
 
