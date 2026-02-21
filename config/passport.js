@@ -30,6 +30,8 @@ passport.use(new LocalStrategy(
       }
       // If none of the above, return the user
       return done(null, dbUser);
+    }).catch(function(err) {
+      return done(err);
     });
   }
 ));
@@ -38,11 +40,19 @@ passport.use(new LocalStrategy(
 // Sequelize needs to serialize and deserialize the user
 // Just consider this part boilerplate needed to make it all work
 passport.serializeUser(function(user, cb) {
-  cb(null, user);
+  cb(null, user.id);
 });
 
-passport.deserializeUser(function(obj, cb) {
-  cb(null, obj);
+passport.deserializeUser(function(id, cb) {
+  db.User.findByPk(id, {
+    attributes: {
+      exclude: ["password"]
+    }
+  }).then(function(user) {
+    cb(null, user || false);
+  }).catch(function(err) {
+    cb(err);
+  });
 });
 
 // Exporting our configured passport
