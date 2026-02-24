@@ -130,7 +130,7 @@ TEST_DB_USER=good_reader_app
 TEST_DB_PASSWORD=your_test_db_password
 
 # Production only (used when NODE_ENV=production)
-JAWSDB_URL=<REDACTED_JAWSDB_URL>
+JAWSDB_URL=mysql://user:password@host:3306/database
 ```
 </details>
 
