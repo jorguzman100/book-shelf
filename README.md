@@ -8,7 +8,7 @@ Memphis Shelf is a beginner-friendly full-stack web app where users can sign up,
 
 ## ✨ Features
 
-| | Feature | Why it matters |
+| | Feature | What It Does |
 |---|---|---|
 | 🔐 | Auth with sessions + Passport | Users get protected pages and persistent login state |
 | 📚 | Category-based catalog browsing | Makes a large seeded catalog easier to explore |
@@ -21,7 +21,7 @@ Memphis Shelf is a beginner-friendly full-stack web app where users can sign up,
 
 <p align="center">
   <img
-    src="./assets/images/screenshot6.png"
+    src="./public/images/book-shelf.webp"
     alt="Book Shelf cart and purchase history page screenshot"
     width="520"
     style="border-radius: 12px; box-shadow: 0 10px 28px rgba(16, 24, 40, 0.18); object-position: top;"
