@@ -11,7 +11,7 @@ module.exports = function (sequelize, DataTypes) {
     });
 
     Shoppingcart.associate = function (models) {
-        Shoppingcart.belongsTo(models.User, {  // foreignKey ??
+        Shoppingcart.belongsTo(models.User, {
             allowNull: true
         });
         Shoppingcart.belongsToMany(models.Book, { through: models.Shoppingcart_Book });

@@ -1,32 +1,19 @@
-// *****************************************************************************
-// Server.js - This file is the initial starting point for the Node/Express server.
-//
-// ******************************************************************************
-// *** Dependencies
-// =============================================================
 require("./config/load-env");
 var express = require("express");
 var path = require("path");
 var fs = require("fs");
 
 var session = require("express-session");
-// Requiring passport as we've configured it
 var passport = require("./config/passport");
 var SequelizeSessionStore = require("./config/session-store");
 var csrfMiddleware = require("./config/middleware/csrf");
+var compression = require("compression");
 
-// Compress
-var compression = require('compression')
-
-
-// Sets up the Express App
-// =============================================================
 var app = express();
 var PORT = process.env.PORT || 8090;
 var isProduction = process.env.NODE_ENV === "production";
 
-// compress all responses
-app.use(compression())
+app.use(compression());
 
 app.use(function applySecurityHeaders(req, res, next) {
   res.setHeader(
@@ -56,27 +43,19 @@ app.use(function applySecurityHeaders(req, res, next) {
   next();
 });
 
-// Requiring our models for syncing
 var db = require("./models");
 var sessionStore = new SequelizeSessionStore(db.Session);
 
-// Sets up the Express app to handle data parsing
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
-// Set Handlebars.
 var exphbs = require("express-handlebars");
 
-app.engine("handlebars", exphbs.engine({
-  defaultLayout: "main",
-  //layoutsDir: path.join(__dirname, 'views')
-}));
+app.engine("handlebars", exphbs.engine({ defaultLayout: "main" }));
 app.set("view engine", "handlebars");
 
-// Static directory
 app.use(express.static("public"));
 
-// We need to use sessions to keep track of our user's login status
 if (!process.env.SESSION_SECRET) {
   throw new Error("Missing SESSION_SECRET environment variable.");
 }
@@ -110,8 +89,6 @@ app.use(function exposeCurrentUser(req, res, next) {
 app.use(csrfMiddleware.ensureCsrfToken);
 app.use(csrfMiddleware.verifyCsrfToken);
 
-// Routes
-// =============================================================
 require("./routes/html-routes.js")(app);
 require("./routes/user-api-routes.js")(app);
 require("./routes/book-api-routes.js")(app);
@@ -160,9 +137,6 @@ function seedBooksIfNeeded() {
     });
 }
 
-// Syncing our sequelize models and then starting our Express app
-// =============================================================
-/* { force: true } */
 db.sequelize
   .sync()
   .then(function() {

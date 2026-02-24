@@ -1,7 +1,8 @@
 # Custom
 info.sh
 info.txt
-.env.example
+Thumbs.db
+~$*.xlsx
 
 # Logs
 logs
@@ -46,6 +47,7 @@ build/Release
 node_modules/
 jspm_packages/
 .DS_Store
+*.DS_Store?
 .env
 
 # TypeScript v1 declaration files

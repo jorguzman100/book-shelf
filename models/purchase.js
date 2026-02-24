@@ -1,6 +1,5 @@
 module.exports = function (sequelize, DataTypes) {
     var Purchase = sequelize.define("Purchase", {
-        // total: DataTypes.DECIMAL(10,2),
         date: DataTypes.DATE,
         createdAt: {
             type: DataTypes.DATE,
@@ -14,7 +13,7 @@ module.exports = function (sequelize, DataTypes) {
 
     Purchase.associate = function (models) {
         Purchase.belongsTo(models.User, {
-            foreignKey: {  // ??
+            foreignKey: {
                 allowNull: false
             }
         });

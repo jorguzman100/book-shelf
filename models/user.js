@@ -3,7 +3,6 @@ var bcrypt = require("bcryptjs");
 module.exports = function (sequelize, DataTypes) {
     var User = sequelize.define("User", {
         name: DataTypes.STRING,
-        // The email cannot be null, and must be a proper email before creation
         email: {
             type: DataTypes.STRING,
             allowNull: false,
@@ -12,7 +11,6 @@ module.exports = function (sequelize, DataTypes) {
                 isEmail: true
             }
         },
-        // The password cannot be null
         password: {
             type: DataTypes.STRING,
             allowNull: false
@@ -31,14 +29,9 @@ module.exports = function (sequelize, DataTypes) {
     });
 
     User.associate = function (models) {
-        // Associating User with Shoppingcart
-        // When an User is deleted, also delete any associated Shoppingcarts
         User.hasOne(models.Shoppingcart, {
             allowNull: true
         });
-        /* User.hasMany(models.Book, {
-            allowNull: true
-        }); */
         User.hasMany(models.Purchase, {
         });
     };
@@ -48,9 +41,9 @@ module.exports = function (sequelize, DataTypes) {
     };
 
     User.addHook("beforeCreate", function (user) {
+        // Hash passwords before saving a new user.
         user.password = bcrypt.hashSync(user.password, bcrypt.genSaltSync(10), null);
     });
 
     return User;
 };
-

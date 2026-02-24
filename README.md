@@ -1,184 +1,143 @@
-# The Book Shelf
+# 📚 Memphis Shelf (Book Shelf)
 
-The Book Shelf is a full stack web application where a user can register, browse in a book database, select books and add them to a purchasing cart, keep record of user’s purchase history, and request authentication to have access to the main functionality.
+### A full-stack bookstore app for browsing, carting, and tracking purchases with a bold retro UI.
 
-## Badges
+Memphis Shelf is a beginner-friendly full-stack web app where users can sign up, browse a large book catalog by category, add books to a cart, and keep a purchase history. It mixes classic MVC structure with a refreshed frontend style, so the project is useful to learn from and fun to use.
 
-Code quality and validation
+---
 
-[![Language grade: JavaScript](https://img.shields.io/lgtm/grade/javascript/g/jorguzman100/project2.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/jorguzman100/project2/context:javascript)
-![shields.io](https://img.shields.io/github/languages/top/jorguzman100/project2)
-![shields.io](https://img.shields.io/w3c-validation/html?targetUrl=https%3A%2F%2Fjorguzman100.github.io%2Fproject2%2F)
+## ✨ Features
 
-Repository Status
+| | Feature | Why it matters |
+|---|---|---|
+| 🔐 | Auth with sessions + Passport | Users get protected pages and persistent login state |
+| 📚 | Category-based catalog browsing | Makes a large seeded catalog easier to explore |
+| 🛒 | Add-to-cart flow | Users can build a cart directly from book detail modals |
+| 🧾 | Purchase history tracking | Keeps a record of confirmed purchases per user |
+| 🛡️ | CSRF + security headers | Adds practical baseline protection for common web attacks |
+| 🌗 | Light/Dark theme toggle | Improves UX and makes the UI feel more polished |
 
-![shields.io](https://img.shields.io/badge/Repo%20Status-Finished-brightgreen)
-![shields.io](https://img.shields.io/bitbucket/issues/jorguzman100/project2)
+---
 
-License
+<p align="center">
+  <img
+    src="./assets/images/screenshot6.png"
+    alt="Book Shelf cart and purchase history page screenshot"
+    width="520"
+    style="border-radius: 12px; box-shadow: 0 10px 28px rgba(16, 24, 40, 0.18); object-position: top;"
+  />
+</p>
 
-![GitHub](https://img.shields.io/github/license/jorguzman100/project2)
+---
 
-## Table of contents
+## 🛠️ Tech Stack
 
-- [The Book Shelf](#the-book-shelf)
-  - [Badges](#badges)
-  - [Table of contents](#table-of-contents)
-  - [The challenge](#the-challenge)
-  - [The development process](#the-development-process)
-  - [The Output](#the-output)
-  - [Installation and Usage](#installation-and-usage)
-  - [Credits, tools and other references](#credits-tools-and-other-references)
-  - [Contributing](#contributing)
-  - [Questions](#questions)
+![Node.js](https://img.shields.io/badge/Node.js-339933?style=flat-square&logo=nodedotjs&logoColor=white)
+![Express](https://img.shields.io/badge/Express-000000?style=flat-square&logo=express&logoColor=white)
+![MySQL](https://img.shields.io/badge/MySQL-4479A1?style=flat-square&logo=mysql&logoColor=white)
+![Sequelize](https://img.shields.io/badge/Sequelize-52B0E7?style=flat-square&logo=sequelize&logoColor=white)
+![Handlebars](https://img.shields.io/badge/Handlebars-000000?style=flat-square&logo=handlebarsdotjs&logoColor=white)
+![Bootstrap](https://img.shields.io/badge/Bootstrap_4-7952B3?style=flat-square&logo=bootstrap&logoColor=white)
+![jQuery](https://img.shields.io/badge/jQuery-0769AD?style=flat-square&logo=jquery&logoColor=white)
+![Passport](https://img.shields.io/badge/Passport-34E27A?style=flat-square&logo=passport&logoColor=111111)
 
-## The challenge
+---
 
-Create a Full Stack Web Application with the following features:
+## 🧩 Project Snapshot
 
-- [x] Use a Node and Express web server
-- [x] Backed by a MySQL database with a Sequelize ORM
-- [x] Use an existing public dataset to power the database (Kaggel 7K Books)
-- [x] Migration strategy using seeds and schema files
-- [x] Routes for retrieving and adding new data
-- [x] Incorporate authentication (Passport, BCrypt)
-- [x] Folder structure that meets the MVC paradigm
-- [x] Use Handlebars for server-side templating
-- [x] Protected API keys in Node with environment variables
-- [x] Polished front end/UI
-- [x] Meet good-quality coding standards (indentation, scoping, naming, etc.)
-- [x] Deployed using Heroku (with data)
+- Express + Handlebars MVC app with Sequelize models and MySQL persistence
+- Auth flow built with `passport-local`, `bcryptjs`, sessions, and a custom Sequelize session store
+- Core API modules: users/auth, books, shopping carts, and purchases
+- Protected pages: `/home`, `/browse`, `/cart`
+- Auto DB bootstrap via `scripts/setup-db.js` and auto seed load from `books.sql` when `Books` is empty
 
-## The development process
+---
 
-In order to accomplish the challenge, the following steps were done:
+## 🚀 Live Demo
 
-1. Brain storming to define the project main concept.
-2. External datasets research.
-3. Define the purpose, and concept of the application.
-4. Define the team members roles.
-5. Define MVPs (Minimum Viable Products) and due dates.
-6. Create sketches.
-7. Define the routes, requests and responses structure.
-8. Front end and back end coding.
-9. Integrate full stack application.
-10. Final review and proper documentation.
+![Deployment](https://img.shields.io/badge/Deployment-Not%20deployed%20yet-lightgrey?style=for-the-badge)
+[![GitHub](https://img.shields.io/badge/GitHub-Repo-181717?style=for-the-badge&logo=github)](https://github.com/jorguzman100/book-shelf)
 
-![MVPs](./assets/images/MVPs.png)
+No public deployment yet. Run it locally for now.
 
-## The Output
+---
 
-With the described process we were able to create an angaging, useful and efficient full stack web application.
+## 💻 Run it locally
 
-**User stories**
+```bash
+git clone https://github.com/jorguzman100/book-shelf.git
+cd book-shelf
+npm install
+cp .env.example .env
+# edit .env with your local values
+npm start
+```
 
-1. As a user I want to navigate through categories, and select a book, so I can read detail information about it
-2. As a user I want to select books, add them to a purchasing cart, review information and confirm purchase, so I will receive a confirmation of my operation.
-3. As a user I want to pass through an authentication process, so that I can feel confident that the site is secure and keep the record of my operations.
+Development mode (watch server changes):
 
-**The application**
+```bash
+npm run dev
+```
 
-![Screenshot1](./assets/images/screenshot1.png)
-![Screenshot2](./assets/images/screenshot2.png)
-![Screenshot3](./assets/images/screenshot3.png)
-![Screenshot4](./assets/images/screenshot4.png)
-![Screenshot5](./assets/images/screenshot5.png)
-![Screenshot6](./assets/images/screenshot6.png)
+Notes:
 
-## Installation and Usage
+- `npm start` and `npm run dev` run `npm run db:setup` first (`prestart` / `predev`)
+- `scripts/setup-db.js` uses the `mysql` CLI, so MySQL client tools must be installed
+- On first run, the app seeds books from `books.sql` if the `Books` table is empty
 
-The project was uploaded to [GitHub](https://github.com/) at the following repository:
-[https://github.com/jorguzman100/project2](https://github.com/jorguzman100/project2)
+Local URL:
 
-You can access the deployed application with the Heroku link:
-[https://safe-basin-04900.herokuapp.com/](https://safe-basin-04900.herokuapp.com/)
+- App: `http://localhost:8090`
 
-Quick local setup (easiest path):
+<details>
+<summary>🔑 Required environment variables</summary>
 
-1. Install dependencies:
+```env
+# App
+NODE_ENV=development
+PORT=8090
+SESSION_SECRET=your_long_random_session_secret
 
-   - `npm install`
-
-2. Create your local env file from the safe template:
-
-   - `cp .env.example .env`
-
-3. Edit `.env` and set your own values (`SESSION_SECRET`, `DB_PASSWORD`, admin MySQL credentials, etc.).
-   `DB_AUTH_PLUGIN` is optional. If unsure, leave it as `mysql_native_password`.
-   `DB_RESET_ON_START=true` means each `npm start`/`npm run dev` resets DB/user from scratch.
-   `JAWSDB_URL` is for production only; for local use you can leave the template value unchanged.
-
-4. Start the app:
-
-   - `npm start`
-
-   This now runs MySQL connectivity check (`SELECT VERSION()`) and DB bootstrap automatically (`npm run db:setup`) before launching the server.
-   For full reset mode (`DB_RESET_ON_START=true`), valid admin credentials in `.env` are required (`MYSQL_ADMIN_*` or `MYSQL_ROOT_*`).
-
-5. For development with auto-reload:
-
-   - `npm run dev`
-
-6. Optional: load seed books:
-
-   - `mysql -u bookshelf_app -p good_reader_db < books.sql`
-
-7. Open:
-
-   - `http://localhost:8090`
-
-Pre-push safety checks:
-
-- Confirm `.env` is not tracked: `git ls-files .env` (must print nothing).
-- Confirm no secrets are staged: `git diff --cached`.
-- If any secret was ever committed, rotate it before pushing.
-
-## Credits, tools and other references
-
-**Colaborators**
-
-Our appreciation for those who have contributed to the project:
-
-Front End
-
-[Anel Ramirez](https://github.com/AnelRaSant)
-
-Front End
-
-[Jimena Pereda](https://github.com/JimenaPereda)
-
-Project Leader and BackEnd
-
-[Jorge Guzman](https://github.com/jorguzman100)
-
-**Third Party Assets**
-
-[Kaggle Datasets](https://www.kaggle.com/)
-
-[Passport Authentication](https://www.npmjs.com/package/passport)
-
-[BCrypt hash password](https://www.npmjs.com/package/bcrypt)
-
-[Balsamiq](https://balsamiq.com/)
-
-[Moment.js](https://momentjs.com/)
-
-[Bootstrap](https://getbootstrap.com/)
-
-[Font Awesome](https://fontawesome.com/)
-
-[Shields.io](https://shields.io/)
-
-[LGTM](https://lgtm.com/)
-
-[Markup Validation Service](https://validator.w3.org/)
-
-## Contributing
-
-- Pull requests are welcome.
-- For major changes, please open an issue first to discuss what you would like to change.
-- Please make sure to update tests as appropriate.
-
-## Questions
-
-If you have questions or you want to share comments, we will be glad to hear from you. Please contact us at jorguzman100@gmail.com.
+# App DB connection (required)
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_NAME=good_reader_db
+DB_USER=good_reader_app
+DB_PASSWORD=your_app_db_password
+
+# Optional app config
+BOOK_ADMIN_EMAILS=you@example.com
+DB_USER_HOST=localhost
+DB_RESET_ON_START=false
+DB_AUTH_PLUGIN=mysql_native_password
+
+# Optional admin/root credentials for scripts/setup-db.js
+MYSQL_ROOT_HOST=127.0.0.1
+MYSQL_ROOT_PORT=3306
+MYSQL_ROOT_USER=root
+MYSQL_ROOT_PASSWORD=your_root_password
+
+MYSQL_ADMIN_HOST=127.0.0.1
+MYSQL_ADMIN_PORT=3306
+MYSQL_ADMIN_USER=local_admin
+MYSQL_ADMIN_PASSWORD=your_admin_password
+
+# Optional test DB (falls back to DB_* values if omitted)
+TEST_DB_HOST=127.0.0.1
+TEST_DB_PORT=3306
+TEST_DB_NAME=database_test
+TEST_DB_USER=good_reader_app
+TEST_DB_PASSWORD=your_test_db_password
+
+# Production only (used when NODE_ENV=production)
+JAWSDB_URL=<REDACTED_JAWSDB_URL>
+```
+</details>
+
+---
+
+## 🤝 Contributors
+
+- **Anel Ramirez**  ·  [@AnelRaSant](https://github.com/AnelRaSant)
+- **Jimena Pereda**  ·  [@JimenaPereda](https://github.com/JimenaPereda)
+- **Jorge Guzman**  ·  [@jorguzman100](https://github.com/jorguzman100)

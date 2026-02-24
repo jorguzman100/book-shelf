@@ -1,7 +1,3 @@
-// *********************************************************************************
-// shoppingcart-api-routes.js - routes for shopping cart operations
-// *********************************************************************************
-
 var db = require("../models");
 var isAuthenticated = require("../config/middleware/isAuthenticated");
 
