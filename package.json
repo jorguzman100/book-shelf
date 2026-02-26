@@ -5,7 +5,7 @@
   "main": "server.js",
   "scripts": {
     "db:setup": "node scripts/setup-db.js",
-    "prestart": "npm run db:setup",
+    "prestart": "node scripts/prestart.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node server.js",
     "predev": "npm run db:setup",

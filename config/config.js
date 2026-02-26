@@ -13,6 +13,32 @@ function resolveLogging() {
   return /^true$/i.test(process.env.SEQUELIZE_LOGGING || "") ? console.log : false;
 }
 
+function resolveProductionDatabaseEnvVar() {
+  var candidates = ["DATABASE_URL", "JAWSDB_URL"];
+
+  for (var i = 0; i < candidates.length; i += 1) {
+    var value = process.env[candidates[i]];
+    if (typeof value === "string" && value.trim() !== "") {
+      return candidates[i];
+    }
+  }
+
+  // Default to Render's convention when no env is set yet.
+  return "DATABASE_URL";
+}
+
+function resolveProductionDialectOptions() {
+  if (!/^true$/i.test(process.env.DB_SSL || "")) {
+    return undefined;
+  }
+
+  return {
+    ssl: {
+      rejectUnauthorized: /^true$/i.test(process.env.DB_SSL_REJECT_UNAUTHORIZED || "")
+    }
+  };
+}
+
 module.exports = {
   development: {
     username: process.env.DB_USER,
@@ -33,8 +59,9 @@ module.exports = {
     logging: resolveLogging()
   },
   production: {
-    use_env_variable: "JAWSDB_URL",
+    use_env_variable: resolveProductionDatabaseEnvVar(),
     dialect: "mysql",
-    logging: resolveLogging()
+    logging: resolveLogging(),
+    dialectOptions: resolveProductionDialectOptions()
   }
 };

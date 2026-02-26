@@ -81,7 +81,8 @@ npm run dev
 
 Notes:
 
-- `npm start` and `npm run dev` run `npm run db:setup` first (`prestart` / `predev`)
+- `npm run dev` runs `npm run db:setup` first (`predev`)
+- `npm start` runs a guarded `prestart` script that skips local DB bootstrap on hosted/production deploys
 - `scripts/setup-db.js` uses the `mysql` CLI, so MySQL client tools must be installed
 - On first run, the app seeds books from `books.sql` if the `Books` table is empty
 
@@ -109,6 +110,7 @@ DB_PASSWORD=your_app_db_password
 BOOK_ADMIN_EMAILS=you@example.com
 DB_USER_HOST=localhost
 DB_RESET_ON_START=false
+DB_SETUP_ON_START=true
 DB_AUTH_PLUGIN=mysql_native_password
 
 # Optional admin/root credentials for scripts/setup-db.js
@@ -129,10 +131,63 @@ TEST_DB_NAME=database_test
 TEST_DB_USER=good_reader_app
 TEST_DB_PASSWORD=your_test_db_password
 
-# Production only (used when NODE_ENV=production)
+# Production / hosted deploys (used when NODE_ENV=production)
+DATABASE_URL=mysql://user:password@host:3306/database
+# Backward-compatible alternative
 JAWSDB_URL=mysql://user:password@host:3306/database
+# Enable if your managed MySQL provider requires TLS
+DB_SSL=false
+DB_SSL_REJECT_UNAUTHORIZED=false
 ```
 </details>
+
+---
+
+## ☁️ Deploy on Render (Web Service)
+
+This app was not Render-ready before because `npm start` triggered a local-only MySQL bootstrap (`mysql` CLI + admin credentials). That is now fixed.
+
+### What changed for Render readiness
+
+- `npm start` now skips local DB bootstrap on hosted/production starts
+- Production DB config now supports Render-style `DATABASE_URL` (and still supports `JAWSDB_URL`)
+- Added `GET /healthz` for Render health checks without creating sessions in the DB
+
+### Before you deploy
+
+- You need a reachable **MySQL** database (managed MySQL provider or any hosted MySQL instance)
+- Copy its connection string in this format: `mysql://user:password@host:3306/database`
+
+### Step-by-step (Render)
+
+1. Push this updated code to GitHub.
+2. In Render, click `New +` -> `Web Service`.
+3. Connect your GitHub repo and select this project.
+4. Configure the service:
+   - Runtime: `Node`
+   - Build Command: `npm install`
+   - Start Command: `npm start`
+   - Health Check Path: `/healthz`
+5. Add environment variables in Render:
+   - `NODE_ENV=production`
+   - `SESSION_SECRET=<long random secret>`
+   - `DATABASE_URL=<your mysql connection string>`
+   - `DB_SETUP_ON_START=false` (optional but recommended for clarity)
+   - `DB_SSL=true` (only if your MySQL provider requires SSL/TLS)
+   - `DB_SSL_REJECT_UNAUTHORIZED=false` (only if your provider docs require it)
+6. Deploy the service.
+7. Wait for first startup to finish:
+   - The app runs `sequelize.sync()`
+   - If the `Books` table is empty, it seeds data from `books.sql` automatically
+8. Open the Render URL and test:
+   - `GET /healthz` should return `{"status":"ok"}`
+   - `/` should load the signup page (or redirect to `/home` if logged in)
+
+### Notes
+
+- Do not set `PORT` manually on Render; Render injects it automatically.
+- If you see `Missing DATABASE_URL for NODE_ENV=production`, the DB URL env var is not set correctly.
+- If your DB provider requires SSL and connections fail, set `DB_SSL=true`.
 
 ---
 

@@ -43,6 +43,11 @@ app.use(function applySecurityHeaders(req, res, next) {
   next();
 });
 
+// Keep health checks fast and stateless (no session writes).
+app.get("/healthz", function(_req, res) {
+  res.status(200).json({ status: "ok" });
+});
+
 var db = require("./models");
 var sessionStore = new SequelizeSessionStore(db.Session);
 
@@ -144,7 +149,7 @@ db.sequelize
   })
   .then(function() {
     app.listen(PORT, function() {
-      console.log("==> 🌎  Listening on port %s. Visit http://localhost:%s/ in your browser.", PORT, PORT);
+      console.log("==> 🌎  Listening on port %s.", PORT);
     });
   })
   .catch(function(err) {
