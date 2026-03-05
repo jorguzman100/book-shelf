@@ -1,28 +1,6 @@
 var db = require("../models");
 var isAuthenticated = require("../config/middleware/isAuthenticated");
 
-function getBookAdminEmails() {
-  return String(process.env.BOOK_ADMIN_EMAILS || "")
-    .split(",")
-    .map(function(email) {
-      return email.trim().toLowerCase();
-    })
-    .filter(function(email) {
-      return email.length > 0;
-    });
-}
-
-function isBookAdmin(req, res, next) {
-  var allowedEmails = getBookAdminEmails();
-  var sessionEmail = req.user && req.user.email ? String(req.user.email).toLowerCase() : "";
-
-  if (allowedEmails.includes(sessionEmail)) {
-    return next();
-  }
-
-  return res.status(403).json({ message: "Admin access required." });
-}
-
 module.exports = function(app) {
   app.get("/api/books", isAuthenticated, function(req, res) {
     return db.Book.findAll({})
@@ -63,7 +41,7 @@ module.exports = function(app) {
       });
   });
 
-  app.post("/api/books", isAuthenticated, isBookAdmin, function(req, res) {
+  app.post("/api/books", isAuthenticated, function(req, res) {
     return db.Book.create(req.body)
       .then(function(dbBook) {
         res.json(dbBook);
@@ -73,7 +51,7 @@ module.exports = function(app) {
       });
   });
 
-  app.delete("/api/books/:id", isAuthenticated, isBookAdmin, function(req, res) {
+  app.delete("/api/books/:id", isAuthenticated, function(req, res) {
     return db.Book.destroy({
       where: {
         id: req.params.id
@@ -87,7 +65,7 @@ module.exports = function(app) {
       });
   });
 
-  app.put("/api/books", isAuthenticated, isBookAdmin, function(req, res) {
+  app.put("/api/books", isAuthenticated, function(req, res) {
     return db.Book.update(req.body, {
       where: {
         id: req.body.id

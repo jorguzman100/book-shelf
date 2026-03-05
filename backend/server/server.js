@@ -24,7 +24,7 @@ app.use(function applySecurityHeaders(req, res, next) {
       "style-src 'self' 'unsafe-inline' https://stackpath.bootstrapcdn.com https://fonts.googleapis.com",
       "img-src 'self' data: https:",
       "font-src 'self' data: https://stackpath.bootstrapcdn.com https://fonts.gstatic.com",
-      "connect-src 'self'",
+      "connect-src 'self' https://cdn.jsdelivr.net https://stackpath.bootstrapcdn.com",
       "object-src 'none'",
       "base-uri 'self'",
       "frame-ancestors 'none'",
@@ -58,8 +58,9 @@ var exphbs = require("express-handlebars");
 
 app.engine("handlebars", exphbs.engine({ defaultLayout: "main" }));
 app.set("view engine", "handlebars");
+app.set("views", path.join(__dirname, "../../client/views"));
 
-app.use(express.static("public"));
+app.use(express.static(path.join(__dirname, "../../client/public")));
 
 if (!process.env.SESSION_SECRET) {
   throw new Error("Missing SESSION_SECRET environment variable.");
@@ -101,7 +102,7 @@ require("./routes/shoppingcart-api-routes.js")(app);
 require("./routes/purchase-api-routes.js")(app);
 
 function readBooksSeedSql() {
-  var sqlPath = path.join(__dirname, "books.sql");
+  var sqlPath = path.join(__dirname, "../database/books.sql");
 
   if (!fs.existsSync(sqlPath)) {
     return "";

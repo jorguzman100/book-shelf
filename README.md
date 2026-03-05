@@ -1,8 +1,8 @@
-# 📚 Memphis Shelf (Book Shelf)
+# 📚 Memphis Shelf
 
-### A full-stack bookstore app for browsing, carting, and tracking purchases with a bold retro UI.
+### Full-stack bookstore app for browsing, carting, and tracking your purchases
 
-Memphis Shelf is a beginner-friendly full-stack web app where users can sign up, browse a large book catalog by category, add books to a cart, and keep a purchase history. It mixes classic MVC structure with a refreshed frontend style, so the project is useful to learn from and fun to use.
+Memphis Shelf (The Good Reader) is a Node.js + Express web app where users can sign up, browse a seeded catalog by category, add books to a cart, and confirm purchases. It is built as a server-rendered experience with Handlebars views and a MySQL backend, with account sessions handled through Passport.
 
 ---
 
@@ -10,19 +10,19 @@ Memphis Shelf is a beginner-friendly full-stack web app where users can sign up,
 
 | | Feature | What It Does |
 |---|---|---|
-| 🔐 | Auth with sessions + Passport | Users get protected pages and persistent login state |
-| 📚 | Category-based catalog browsing | Makes a large seeded catalog easier to explore |
-| 🛒 | Add-to-cart flow | Users can build a cart directly from book detail modals |
-| 🧾 | Purchase history tracking | Keeps a record of confirmed purchases per user |
-| 🛡️ | CSRF + security headers | Adds practical baseline protection for common web attacks |
-| 🌗 | Light/Dark theme toggle | Improves UX and makes the UI feel more polished |
+| 🔐 | Session-Based Auth | Sign up, log in, and keep user sessions with Passport + express-session. |
+| 📚 | Category Browsing | Browse books by category and open full book details in a modal. |
+| 🛒 | Cart Flow | Add books directly from browse results into a persistent user cart. |
+| ✅ | Checkout Action | Convert cart items into purchases with a single confirm action. |
+| 🧾 | Purchase History | View prior purchases with title, price, and formatted purchase date. |
+| 🛡️ | Security Middleware | Includes CSRF protection, auth checks, rate limiting, and security headers. |
 
 ---
 
 <p align="center">
   <img
-    src="./public/images/book-shelf.webp"
-    alt="Book Shelf cart and purchase history page screenshot"
+    src="./client/public/images/book-shelf.webp"
+    alt="Memphis Shelf application screenshot"
     width="520"
     style="border-radius: 12px; box-shadow: 0 10px 28px rgba(16, 24, 40, 0.18); object-position: top;"
   />
@@ -34,165 +34,83 @@ Memphis Shelf is a beginner-friendly full-stack web app where users can sign up,
 
 ![Node.js](https://img.shields.io/badge/Node.js-339933?style=flat-square&logo=nodedotjs&logoColor=white)
 ![Express](https://img.shields.io/badge/Express-000000?style=flat-square&logo=express&logoColor=white)
-![MySQL](https://img.shields.io/badge/MySQL-4479A1?style=flat-square&logo=mysql&logoColor=white)
-![Sequelize](https://img.shields.io/badge/Sequelize-52B0E7?style=flat-square&logo=sequelize&logoColor=white)
-![Handlebars](https://img.shields.io/badge/Handlebars-000000?style=flat-square&logo=handlebarsdotjs&logoColor=white)
-![Bootstrap](https://img.shields.io/badge/Bootstrap_4-7952B3?style=flat-square&logo=bootstrap&logoColor=white)
+![Handlebars](https://img.shields.io/badge/Handlebars-000000?style=flat-square&logo=handlebarsdotjs&logoColor=FF7A00)
 ![jQuery](https://img.shields.io/badge/jQuery-0769AD?style=flat-square&logo=jquery&logoColor=white)
-![Passport](https://img.shields.io/badge/Passport-34E27A?style=flat-square&logo=passport&logoColor=111111)
+![Bootstrap](https://img.shields.io/badge/Bootstrap%204-7952B3?style=flat-square&logo=bootstrap&logoColor=white)
+![MySQL](https://img.shields.io/badge/MySQL-4479A1?style=flat-square&logo=mysql&logoColor=white)
+![Passport](https://img.shields.io/badge/Passport-34E27A?style=flat-square&logo=passport&logoColor=black)
 
 ---
 
 ## 🧩 Project Snapshot
 
-- Express + Handlebars MVC app with Sequelize models and MySQL persistence
-- Auth flow built with `passport-local`, `bcryptjs`, sessions, and a custom Sequelize session store
-- Core API modules: users/auth, books, shopping carts, and purchases
-- Protected pages: `/home`, `/browse`, `/cart`
-- Auto DB bootstrap via `scripts/setup-db.js` and auto seed load from `books.sql` when `Books` is empty
+- Server entrypoint: `backend/server/server.js` (Express app + Handlebars rendering + static client assets).
+- Main API groups: `/api/login`, `/api/signup`, `/api/user_data`, `/api/books`, `/api/shoppingcarts`, `/api/purchases`.
+- Auth & security: Passport local strategy, session cookies, CSRF token verification, per-route auth middleware, and basic login/signup rate limiting.
+- Frontend pages: `/` (signup), `/login`, `/home`, `/browse`, `/cart`.
+- Startup tooling: `npm run db:setup` bootstraps DB/user; startup auto-seeds books from `backend/database/books.sql` if the catalog table is empty.
 
 ---
 
 ## 🚀 Live Demo
 
-![Deployment](https://img.shields.io/badge/Deployment-Not%20deployed%20yet-lightgrey?style=for-the-badge)
-[![GitHub](https://img.shields.io/badge/GitHub-Repo-181717?style=for-the-badge&logo=github)](https://github.com/jorguzman100/book-shelf)
+No public deployment yet. You can run it locally 😉.
 
-No public deployment yet. Run it locally for now.
+To explore other projects:
+
+[![Visit Portfolio](https://img.shields.io/badge/Visit%20My%20Portfolio-jorgeguzman.dev-22c55e?style=for-the-badge)](https://portfolio.jorgeguzman.dev/)
+
 
 ---
 
 ## 💻 Run it locally
+
+Prerequisites:
+
+- Node.js and npm
+- MySQL server running locally
+- `mysql` CLI available in your `PATH` (used by `npm run db:setup`)
 
 ```bash
 git clone https://github.com/jorguzman100/book-shelf.git
 cd book-shelf
 npm install
 cp .env.example .env
-# edit .env with your local values
-npm start
-```
-
-Development mode (watch server changes):
-
-```bash
 npm run dev
 ```
 
-Notes:
+`npm run dev` runs `db:setup` first, then starts the server in watch mode.
 
-- `npm run dev` runs `npm run db:setup` first (`predev`)
-- `npm start` runs a guarded `prestart` script that skips local DB bootstrap on hosted/production deploys
-- `scripts/setup-db.js` uses the `mysql` CLI, so MySQL client tools must be installed
-- On first run, the app seeds books from `books.sql` if the `Books` table is empty
+Book seed data is loaded automatically on first startup if the `Books` table is empty.
 
-Local URL:
+Local URLs:
 
-- App: `http://localhost:8090`
+- App + API: `http://localhost:8090`
+- Health check: `http://localhost:8090/healthz`
 
 <details>
 <summary>🔑 Required environment variables</summary>
 
 ```env
-# App
-NODE_ENV=development
-PORT=8090
-SESSION_SECRET=your_long_random_session_secret
-
-# App DB connection (required)
-DB_HOST=127.0.0.1
+# .env
+DB_HOST=localhost
 DB_PORT=3306
 DB_NAME=good_reader_db
 DB_USER=good_reader_app
 DB_PASSWORD=your_app_db_password
+SESSION_SECRET=your_long_random_session_secret
 
-# Optional app config
-BOOK_ADMIN_EMAILS=you@example.com
-DB_USER_HOST=localhost
-DB_RESET_ON_START=false
-DB_SETUP_ON_START=true
-DB_AUTH_PLUGIN=mysql_native_password
-
-# Optional admin/root credentials for scripts/setup-db.js
-MYSQL_ROOT_HOST=127.0.0.1
-MYSQL_ROOT_PORT=3306
-MYSQL_ROOT_USER=root
-MYSQL_ROOT_PASSWORD=your_root_password
-
-MYSQL_ADMIN_HOST=127.0.0.1
-MYSQL_ADMIN_PORT=3306
-MYSQL_ADMIN_USER=local_admin
-MYSQL_ADMIN_PASSWORD=your_admin_password
-
-# Optional test DB (falls back to DB_* values if omitted)
-TEST_DB_HOST=127.0.0.1
-TEST_DB_PORT=3306
-TEST_DB_NAME=database_test
-TEST_DB_USER=good_reader_app
-TEST_DB_PASSWORD=your_test_db_password
-
-# Production / hosted deploys (used when NODE_ENV=production)
-DATABASE_URL=mysql://user:password@host:3306/database
-# Backward-compatible alternative
-JAWSDB_URL=mysql://user:password@host:3306/database
-# Enable if your managed MySQL provider requires TLS
-DB_SSL=false
-DB_SSL_REJECT_UNAUTHORIZED=false
+# Optional
+PORT=8090
+NODE_ENV=development
+SEQUELIZE_LOGGING=false
 ```
 </details>
 
 ---
 
-## ☁️ Deploy on Render (Web Service)
-
-This app was not Render-ready before because `npm start` triggered a local-only MySQL bootstrap (`mysql` CLI + admin credentials). That is now fixed.
-
-### What changed for Render readiness
-
-- `npm start` now skips local DB bootstrap on hosted/production starts
-- Production DB config now supports Render-style `DATABASE_URL` (and still supports `JAWSDB_URL`)
-- Added `GET /healthz` for Render health checks without creating sessions in the DB
-
-### Before you deploy
-
-- You need a reachable **MySQL** database (managed MySQL provider or any hosted MySQL instance)
-- Copy its connection string in this format: `mysql://user:password@host:3306/database`
-
-### Step-by-step (Render)
-
-1. Push this updated code to GitHub.
-2. In Render, click `New +` -> `Web Service`.
-3. Connect your GitHub repo and select this project.
-4. Configure the service:
-   - Runtime: `Node`
-   - Build Command: `npm install`
-   - Start Command: `npm start`
-   - Health Check Path: `/healthz`
-5. Add environment variables in Render:
-   - `NODE_ENV=production`
-   - `SESSION_SECRET=<long random secret>`
-   - `DATABASE_URL=<your mysql connection string>`
-   - `DB_SETUP_ON_START=false` (optional but recommended for clarity)
-   - `DB_SSL=true` (only if your MySQL provider requires SSL/TLS)
-   - `DB_SSL_REJECT_UNAUTHORIZED=false` (only if your provider docs require it)
-6. Deploy the service.
-7. Wait for first startup to finish:
-   - The app runs `sequelize.sync()`
-   - If the `Books` table is empty, it seeds data from `books.sql` automatically
-8. Open the Render URL and test:
-   - `GET /healthz` should return `{"status":"ok"}`
-   - `/` should load the signup page (or redirect to `/home` if logged in)
-
-### Notes
-
-- Do not set `PORT` manually on Render; Render injects it automatically.
-- If you see `Missing DATABASE_URL for NODE_ENV=production`, the DB URL env var is not set correctly.
-- If your DB provider requires SSL and connections fail, set `DB_SSL=true`.
-
----
-
 ## 🤝 Contributors
 
-- **Anel Ramirez**  ·  [@AnelRaSant](https://github.com/AnelRaSant)
-- **Jimena Pereda**  ·  [@JimenaPereda](https://github.com/JimenaPereda)
 - **Jorge Guzman**  ·  [@jorguzman100](https://github.com/jorguzman100)
+
+
